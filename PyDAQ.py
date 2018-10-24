@@ -11,15 +11,22 @@ import numpy as np
 
 d_fs = 48000
 d_chunk = 1000
-d_device = 'Dev1'
+d_device = detectdevices()
 d_channel = 'ai0'
 d_channels = ['ai0','ai1']
 d_gain = 1
 Modo_RSE = nidaqmx.constants.TerminalConfiguration.RSE
 
-system = nidaqmx.system.System.local()
-if not system.devices:
-    print ('Ojo! No se han detectado dispositivos conectados')
+# Tratamos de recuperar el device conectado.
+def detectdevices():
+    system = nidaqmx.system.System.local()
+    if not system.devices:
+        print ('Ojo! No se han detectado dispositivos conectados')
+        return 'Null'
+    else:
+        if len(system.devices) > 1:
+            print ('Se detecto '+ len (system.devices)+' dispositivos, se eligio como default el: ' + d_device)
+        return system.devices[0]
 
     
 def listaDispositivos():
@@ -30,10 +37,11 @@ def listaDispositivos():
     else:
         print ('No se han encontrado dispositivos conectados.')
         
-def adquirir1canal(gain = d_gain, device = d_device, channel = d_channel, chunk=d_chunk, fs=d_fs, terminals = Modo_RSE, plot=False):
+def adquirir(gain = d_gain, device = d_device, channel = d_channel, chunk=d_chunk, fs=d_fs, terminals = Modo_RSE, plot=False, channelsNumber = 1):
     with nidaqmx.Task() as task:
-        input_setup = task.ai_channels.add_ai_voltage_chan(device+'/'+channel,terminal_config = terminals)
-        input_setup.ai_gain = gain
+        for ch in np.range(channelsNumber):
+            input_setup = task.ai_channels.add_ai_voltage_chan(device+'/'+'ai'+str(ch),terminal_config = terminals)
+            input_setup.ai_gain = gain
         task.timing.cfg_samp_clk_timing(fs)
         data = task.read(number_of_samples_per_channel=chunk)
     if plot:
@@ -47,10 +55,10 @@ def muestreoVariandoFs (f_ini = 100, f_fin = d_fs*1000, puntos = 1000, plot=Fals
     for frec_sampleo in frecuencias_sampleo:
         # Es importante limitar el tiempo a travez del tamaño del chunk
         tiempo_max = 1 # En segundos
-        chunk = min(1000,tiempo_max*frec_sampleo)
+        chunk = min(1000,int(tiempo_max*frec_sampleo))
         data = adquirir1canal(chunk=chunk, fs=frec_sampleo)
         fft = np.abs(np.fft.fft(data))
-        x = np.array(len(data))
+        x = np.arrange(len(data))
         x = x * len(x)/frec_sampleo
         if plot:
             plt.plot(x,t, '.-')
