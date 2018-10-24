@@ -13,16 +13,15 @@ d_fs = 48000
 d_chunk = 1000
 d_device = 'Dev1'
 d_channel = 'ai0'
+d_channels = ['ai0','ai1']
 d_gain = 1
-# Modo_RSE = nidaqmx.constants.TerminalConfiguration(10083)
 Modo_RSE = nidaqmx.constants.TerminalConfiguration.RSE
 
-#print (nidaqmx.constants.TerminalConfiguration.RSE)
-#print (nidaqmx.constants.TerminalConfiguration(10083))
 system = nidaqmx.system.System.local()
 if not system.devices:
     print ('Ojo! No se han detectado dispositivos conectados')
 
+    
 def listaDispositivos():
     system = nidaqmx.system.System.local()
     if system.devices:
